@@ -36,8 +36,13 @@ load_dotenv()
 
 # Validate API keys
 from aixplain.utils import config
+from aixplain.client import AixplainClient
 
-if config.TEAM_API_KEY == "" and config.AIXPLAIN_API_KEY == "":
-    raise Exception(
-        "'TEAM_API_KEY' has not been set properly and is empty. For help, please refer to the documentation (https://github.com/aixplain/aixplain#api-key-setup)"
-    )
+if not (config.AIXPLAIN_API_KEY or config.TEAM_API_KEY):
+    raise ValueError('''"TEAM_API_KEY" has not been set properly and is empty.
+For help, please refer to the documentation at:
+https://github.com/aixplain/aixplain#api-key-setup''')
+
+client = AixplainClient(api_key=config.AIXPLAIN_API_KEY,
+                        team_api_key=config.TEAM_API_KEY,
+                        base_url=config.BACKEND_URL)
