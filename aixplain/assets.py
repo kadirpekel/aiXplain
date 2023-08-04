@@ -1,7 +1,6 @@
-import json
-from typing import Dict, Any, Type, Optional, Union, Text
+from typing import Dict, Any, Type, Optional, Union, Text, List
+from urllib.parse import urlencode, urljoin
 
-from aixplain import config
 from aixplain.env import client as env_client
 from aixplain.client import AixplainClient
 
@@ -50,27 +49,83 @@ class Asset:
         client = cls._get_client(client)
         return cls(client.get(f'sdk/{cls.asset_path}/{asset_id}'), client)
 
+    @classmethod
+    def _construct_page_url(cls: Type['Asset'], page_number: int,
+                            filters: Optional[Dict[str, Any]] = None) -> str:
+        """
+        Construct a URL to list assets.
+
+        :param page_number: Page number for pagination.
+        :param filters: Optional dictionary of additional filter parameters.
+        :return: Constructed URL.
+        """
+        base_url = f'sdk/{cls.asset_path}/'
+        query_params = {'pageNumber': page_number}
+
+        if filters:
+            query_params.update(filters)
+
+        url_query = urlencode(query_params)
+        full_url = urljoin(base_url, f'?{url_query}')
+
+        return full_url
+
+    @classmethod
+    def page(cls: Type['Asset'], page_number: int,
+             filters: Optional[Dict[str, Any]] = None,
+             client: Optional[AixplainClient] = None,
+             **kwargs) -> List['Asset']:
+        """
+        List assets with optional filtering.
+
+        :param page_number: Page number for pagination.
+        :param client: Optional AixplainClient instance.
+                       If not provided, the class-level or env_client will
+                       be used.
+        :param kwargs: Additional filter parameters.
+        :return: List of Asset instances.
+        """
+        client = cls._get_client(client)
+        url = cls._construct_page_url(page_number, filters=filters)
+        payload = client.get(url)
+        return [cls(item) for item in payload['items']]
+
+    @classmethod
+    def list(cls: Type['Asset'], n: int,
+             filters: Optional[Dict[str, Any]] = None,
+             client: Optional[AixplainClient] = None,
+             **kwargs) -> List['Asset']:
+        """
+        List assets across the first n pages with optional filtering.
+
+        :param n: Number of pages to fetch.
+        :param client: Optional AixplainClient instance.
+                       If not provided, the class-level or env_client will
+                       be used.
+        :param kwargs: Additional filter parameters.
+        :return: List of Asset instances across n pages.
+        """
+        assets = []
+        for page_number in range(1, n + 1):
+            assets += cls.page(page_number, filters=filters, client=client,
+                               **kwargs)
+        return assets
+
 
 class Model(Asset):
     asset_path = 'models'
 
+    def run(self, data: Union[Text, Dict], name: Text = "model_process",
+            timeout: float = 300, parameters: Dict = {},
+            wait_time: float = 0.5) -> Dict:
+        """
+        Model specific actions should be performed under instance methods
+        """
+        raise NotImplementedError()
+
     def run_async(self, data: Union[Text, Dict], name: Text = "model_process",
                   parameters: Dict = {}) -> Dict:
-
-        data = FileFactory.to_link(data)
-        if isinstance(data, dict):
-            payload = data
-        else:
-            try:
-                payload = json.loads(data)
-                if isinstance(payload, dict) is False:
-                    if isinstance(payload, int) is True or isinstance(payload, float) is True:
-                        payload = str(payload)
-                    payload = {"data": payload}
-            except Exception as e:
-                payload = {"data": data}
-        payload.update(parameters)
-        payload = json.dumps(payload)
-
-        call_url = f'{config.MODELS_RUN_URL}/{self.id}'
-        return self.client.request('POST', call_url, data=payload)
+        """
+        Model specific actions should be performed under instance methods
+        """
+        raise NotImplementedError()
