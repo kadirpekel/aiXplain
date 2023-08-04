@@ -91,14 +91,15 @@ class Asset:
         return [cls(item) for item in payload['items']]
 
     @classmethod
-    def list(cls: Type['Asset'], n: int,
+    def list(cls: Type['Asset'],
+             n: int = 1,
              filters: Optional[Dict[str, Any]] = None,
              client: Optional[AixplainClient] = None,
              **kwargs) -> List['Asset']:
         """
         List assets across the first n pages with optional filtering.
 
-        :param n: Number of pages to fetch.
+        :param n: Optional number of pages to fetch.
         :param client: Optional AixplainClient instance.
                        If not provided, the class-level or env_client will
                        be used.
