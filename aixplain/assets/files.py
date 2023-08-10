@@ -18,7 +18,7 @@ class File(BaseAsset):
     @classmethod
     def upload_to_s3(cls,
                      file_name: Union[Text, Path],
-                     content_type: Text = "text/csv",
+                     content_type: Text = 'text/csv',
                      content_encoding: Optional[Text] = None,
                      client: Optional[AixplainClient] = None):
         """
@@ -46,7 +46,7 @@ class File(BaseAsset):
         if content_encoding:
             headers['Content-Encoding'] = content_encoding
 
-        content = open(file_name, "rb").read()
+        content = open(file_name, 'rb').read()
         s3_session = create_retry_session()
 
         s3_response = s3_session.request('PUT',
