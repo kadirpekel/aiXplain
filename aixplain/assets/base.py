@@ -32,6 +32,9 @@ class BaseAsset:
             return self._obj[key]
         raise AttributeError(f"Object has no attribute '{key}'")
 
+
+class GetAssetMixin:
+
     @classmethod
     def get(cls: Type['BaseAsset'], asset_id: str,
             client: Optional[AixplainClient] = None) -> 'BaseAsset':
@@ -49,6 +52,9 @@ class BaseAsset:
                 "Subclasses of 'BaseAsset' must specify 'asset_path'")
         client = cls._get_client(client)
         return cls(client.get(f'sdk/{cls.asset_path}/{asset_id}'), client)
+
+
+class ListAssetMixin:
 
     @classmethod
     def _construct_page_url(cls: Type['BaseAsset'], page_number: int,

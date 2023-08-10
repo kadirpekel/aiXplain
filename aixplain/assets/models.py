@@ -1,8 +1,8 @@
 from typing import Dict, Union, Text
-from aixplain.assets.base import BaseAsset
+from aixplain.assets.base import BaseAsset, GetAssetMixin, ListAssetMixin
 
 
-class Model(BaseAsset):
+class Model(BaseAsset, GetAssetMixin, ListAssetMixin):
     asset_path = 'models'
 
     def run(self, data: Union[Text, Dict], name: Text = "model_process",
