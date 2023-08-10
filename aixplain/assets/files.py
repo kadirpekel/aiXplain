@@ -7,6 +7,12 @@ from aixplain.client import AixplainClient, create_retry_session
 
 
 class File(BaseAsset):
+    """
+    File class that extends the BaseAsset class.
+    This class is responsible for handling file assets, including uploading
+    files to S3.
+    """
+
     asset_path = 'file'
 
     @classmethod
@@ -15,6 +21,19 @@ class File(BaseAsset):
                      content_type: Text = "text/csv",
                      content_encoding: Optional[Text] = None,
                      client: Optional[AixplainClient] = None):
+        """
+        Uploads a file to Amazon S3.
+
+        :param file_name: The path of the file to upload.
+        :param content_type: The content type of the file
+               (default is "text/csv").
+        :param content_encoding: The content encoding of the file
+               (default is None).
+        :param client: Optional AixplainClient instance.
+
+        :return: The S3 URL of the uploaded file.
+        """
+
         client = cls._get_client(client)
         payload = client.request('POST',
                                  f'sdk/{cls.asset_path}/upload/temp-url',
