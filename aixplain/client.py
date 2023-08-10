@@ -5,15 +5,38 @@ from requests.adapters import HTTPAdapter, Retry
 from urllib.parse import urljoin
 
 
+DEFAULT_RETRY_TOTAL = 5
+DEFAULT_RETRY_BACKOFF_FACTOR = 0.1
+DEFAULT_RETRY_STATUS_FORCELIST = [500, 502, 503, 504]
+
+
+def create_retry_session(total=None,
+                         backoff_factor=None,
+                         status_forcelist=None):
+    total = total or DEFAULT_RETRY_TOTAL
+    backoff_factor = backoff_factor or DEFAULT_RETRY_BACKOFF_FACTOR
+    status_forcelist = status_forcelist or DEFAULT_RETRY_STATUS_FORCELIST
+    retry_strategy = Retry(
+        total=total,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist,
+    )
+    session = requests.Session()
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount('https://', adapter)
+    session.mount('http://', adapter)
+    return session
+
+
 class AixplainClient:
-    RETRY_BACKOFF_FACTOR = 0.1
-    RETRY_STATUS_FORCELIST = [500, 502, 503, 504]
 
     def __init__(self, base_url: str,
                  aixplain_api_key: str = None,
                  team_api_key: str = None,
                  max_retries: int = 5,
-                 retry: Retry = None):
+                 retry_total=None,
+                 retry_backoff_factor=None,
+                 retry_status_forcelist=None):
         """
         Initialize AixplainClient with authentication and retry configuration.
 
@@ -26,26 +49,22 @@ class AixplainClient:
         self.base_url = base_url
         self.team_api_key = team_api_key
         self.aixplain_api_key = aixplain_api_key
-        self.max_retries = max_retries
-        self.retry = retry
 
         if not (self.aixplain_api_key or self.team_api_key):
             raise ValueError(
                 'Either `aixplain_api_key` or `team_api_key` should be set')
 
-        default_retry = Retry(total=self.max_retries,
-                              backoff_factor=self.RETRY_BACKOFF_FACTOR,
-                              status_forcelist=self.RETRY_STATUS_FORCELIST)
-        adapter = HTTPAdapter(max_retries=self.retry or default_retry)
         headers = {'Content-Type': 'application/json'}
         if self.aixplain_api_key:
             headers['x-aixplain-key'] = self.aixplain_api_key
         else:
             headers['x-api-key'] = self.team_api_key
-        session = requests.Session()
-        session.headers.update(headers)
-        session.mount(self.base_url, adapter)
-        self.session = session
+
+        self.session = create_retry_session(
+            total=retry_total,
+            backoff_factor=retry_backoff_factor,
+            status_forcelist=retry_status_forcelist)
+        self.session.headers.update(headers)
 
     def request(self, method: str, path: str, **kwargs: Any) -> Dict:
         """
