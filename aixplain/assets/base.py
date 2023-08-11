@@ -6,24 +6,10 @@ from aixplain.client import AixplainClient
 
 
 class BaseAsset:
-    _client: Optional[AixplainClient] = None
+    client: AixplainClient = env_client
 
-    @classmethod
-    def set_client(cls, client: AixplainClient) -> None:
-        """Set a shared client for all instances of this class."""
-        cls._client = client
-
-    @classmethod
-    def _get_client(cls,
-                    client: Optional[AixplainClient] = None) -> AixplainClient:
-        """Return the provided client or the class-level client or env_client.
-        """
-        return client or cls._client or env_client
-
-    def __init__(self, obj: Dict[str, Any],
-                 client: Optional[AixplainClient] = None):
+    def __init__(self, obj: Dict[str, Any]):
         self._obj = obj
-        self.client = self._get_client(client)
 
     def __getattr__(self, key: str) -> Any:
         """Return the value corresponding to the key from the wrapped
@@ -36,22 +22,17 @@ class BaseAsset:
 class GetAssetMixin:
 
     @classmethod
-    def get(cls: Type['BaseAsset'], asset_id: str,
-            client: Optional[AixplainClient] = None) -> 'BaseAsset':
+    def get(cls: Type['BaseAsset'], asset_id: str) -> 'BaseAsset':
         """
         Retrieve an Asset instance by its ID.
 
         :param asset_id: ID of the asset.
-        :param client: Optional AixplainClient instance.
-                       If not provided, the class-level or env_client will be
-                       used.
         :return: Instance of the BaseAsset class.
         """
         if cls.asset_path is None:
             raise ValueError(
                 "Subclasses of 'BaseAsset' must specify 'asset_path'")
-        client = cls._get_client(client)
-        return cls(client.get(f'sdk/{cls.asset_path}/{asset_id}'), client)
+        return cls(cls.client.get(f'sdk/{cls.asset_path}/{asset_id}'))
 
 
 class ListAssetMixin:
@@ -80,41 +61,31 @@ class ListAssetMixin:
     @classmethod
     def page(cls: Type['BaseAsset'], page_number: int,
              filters: Optional[Dict[str, Any]] = None,
-             client: Optional[AixplainClient] = None,
              **kwargs) -> List['BaseAsset']:
         """
         List assets with optional filtering.
 
         :param page_number: Page number for pagination.
-        :param client: Optional AixplainClient instance.
-                       If not provided, the class-level or env_client will
-                       be used.
         :param kwargs: Additional filter parameters.
         :return: List of BaseAsset instances.
         """
-        client = cls._get_client(client)
         url = cls._construct_page_url(page_number, filters=filters)
-        payload = client.get(url)
+        payload = cls.client.get(url)
         return [cls(item) for item in payload['items']]
 
     @classmethod
     def list(cls: Type['BaseAsset'],
              n: int = 1,
              filters: Optional[Dict[str, Any]] = None,
-             client: Optional[AixplainClient] = None,
              **kwargs) -> List['BaseAsset']:
         """
         List assets across the first n pages with optional filtering.
 
         :param n: Optional number of pages to fetch.
-        :param client: Optional AixplainClient instance.
-                       If not provided, the class-level or env_client will
-                       be used.
         :param kwargs: Additional filter parameters.
         :return: List of BaseAsset instances across n pages.
         """
         assets = []
         for page_number in range(1, n + 1):
-            assets += cls.page(page_number, filters=filters, client=client,
-                               **kwargs)
+            assets += cls.page(page_number, filters=filters, **kwargs)
         return assets
