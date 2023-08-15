@@ -6,7 +6,8 @@ from aixplain.client import AixplainClient
 def populate_language_enum(client: AixplainClient = env_client,
                            path: str = 'sdk/languages') -> Enum:
     'Generate an Enum representing available languages and dialects.'
-    payload = client.get(path)
+    response = client.get(path)
+    payload = response.json()
     languages = {}
     for entry in payload:
         language = entry['value']
@@ -26,7 +27,8 @@ def populate_language_enum(client: AixplainClient = env_client,
 def populate_license_enum(client: AixplainClient = env_client,
                           path: str = 'sdk/licenses') -> Enum:
     'Generate an Enum representing available licenses.'
-    payload = client.get(path)
+    response = client.get(path)
+    payload = response.json()
     licences = {}
     for entry in payload:
         license_key = '_'.join(entry['name'].split())
@@ -38,7 +40,8 @@ def populate_license_enum(client: AixplainClient = env_client,
 def populate_function_enum(client: AixplainClient = env_client,
                            path: str = 'sdk/functions') -> Enum:
     'Generate an Enum representing available functions.'
-    payload = client.get(path)
+    response = client.get(path)
+    payload = response.json()
     licences = {}
     for entry in payload['items']:
         function_key = entry['id'].upper().replace('-', '_')

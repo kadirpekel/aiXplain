@@ -85,26 +85,27 @@ class AixplainClient:
             status_forcelist=retry_status_forcelist)
         self.session.headers.update(headers)
 
-    def request(self, method: str, path: str, **kwargs: Any) -> Dict:
+    def request(self, method: str, path: str,
+                **kwargs: Any) -> requests.Response:
         """
         Send an HTTP request.
 
         :param method: HTTP method (e.g. 'GET', 'POST')
         :param path: URL path
         :param kwargs: Additional keyword arguments for the request
-        :return: JSON response as a dictionary
+        :return: requests.Response
         """
         url = urljoin(self.base_url, path)
         response = self.session.request(method=method, url=url, **kwargs)
-        response.raise_for_status()  # Handle error where you call request
-        return response.json()
+        response.raise_for_status()
+        return response
 
-    def get(self, path: str, **kwargs: Any) -> Dict:
+    def get(self, path: str, **kwargs: Any) -> requests.Response:
         """
         Send an HTTP GET request.
 
         :param path: URL path
         :param kwargs: Additional keyword arguments for the request
-        :return: JSON response as a dictionary
+        :return: requests.Response
         """
         return self.request('GET', path, **kwargs)

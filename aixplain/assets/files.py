@@ -90,10 +90,11 @@ class File(BaseAsset):
         :return: The S3 URL of the uploaded file.
         """
 
-        payload = cls.client.request('POST',
-                                     f'sdk/{cls.asset_path}/upload/temp-url',
-                                     json={'contentType': content_type,
-                                           'originalName': file_name})
+        response = cls.client.request('POST',
+                                      f'sdk/{cls.asset_path}/upload/temp-url',
+                                      json={'contentType': content_type,
+                                            'originalName': file_name})
+        payload = response.json()
         path = payload['key']
         presigned_url = payload['uploadUrl']
 
